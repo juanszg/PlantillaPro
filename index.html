@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#17141d"><meta name="description" content="Formato general para crear, organizar y compartir tareas escolares.">
+<title>ActForm · Formato escolar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alata&family=Anonymous+Pro:ital,wght@0,400;0,700;1,400;1,700&family=BioRhyme:wght@200..800&family=Bitter:ital,wght@0,100..900;1,100..900&family=Cantarell:ital,wght@0,400;0,700;1,400;1,700&family=Federo&family=Fondamento:ital@0;1&family=Fredericka+the+Great&family=Kumar+One&family=Major+Mono+Display&family=Mukta+Malar:wght@200;300;400;500;600;700;800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Stardos+Stencil:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css"><script src="app.js" defer></script>
+</head>
+<body><div class="grain" aria-hidden="true"></div>
+<header class="topbar"><a class="brand" href="#inicio"><span>FORMATO ESCOLAR<small>PLANTILLA UNIVERSAL DE ACTIVIDADES</small></span></a><label class="theme-picker">TEMA<select id="theme-select" aria-label="Tema de color"><option value="blue">Blueprint azul</option><option value="orange">Naranja</option><option value="green">Verde</option></select></label></header>
+<main id="inicio"><section class="intro"><p class="eyebrow">ACTFORM · FORMATO ESTÁNDAR</p><h1>Una plantilla para <em>cada materia.</em></h1><p>Organiza tu tarea, desarrolla tus ideas y entrégala como documento o enlace compartido.</p></section>
+<section class="workspace">
+  <div class="workspace-top"><div><h2>Datos de la actividad</h2><p>Completa la información antes de empezar.</p></div><label class="template-picker">Plantilla<select id="template-select"><option value="standard">Formato estándar</option><option value="report">Informe / investigación</option><option value="exercise">Resolución de ejercicios</option></select></label></div>
+  <div class="fields-grid"><label class="wide">Nombre de la actividad<input id="activity-title" placeholder="Ej. Investigación sobre ecosistemas"></label><label>Materia<input id="subject" placeholder="Materia o asignatura"></label><label>Nombre completo<input id="student-name" autocomplete="name" placeholder="Nombre y apellidos"></label><label>Grupo<input id="student-group" placeholder="Grupo"></label><label>Fecha<input id="activity-date" type="date"></label></div>
+  <div class="editor-heading"><div><h2>Desarrollo</h2><p>Escribe, organiza y da formato a tu trabajo.</p></div><button id="print-activity" class="print-button">IMPRIMIR / GUARDAR PDF <b>↗</b></button></div>
+  <div class="editor-toolbar" role="toolbar" aria-label="Formato del texto"><button data-command="bold" aria-label="Negrita"><b>B</b></button><button data-command="italic" aria-label="Cursiva"><i>I</i></button><button data-command="formatBlock" data-value="h2">Título</button><button data-command="insertUnorderedList">• Lista</button><span class="toolbar-separator"></span><label class="insert-image">Insertar imagen<input id="inline-image" type="file" accept="image/*"></label></div>
+  <div id="work-content" class="work-content" contenteditable="true" data-placeholder="Escribe aquí tu tarea. Puedes pegar texto, escribir respuestas y organizar la información…" aria-label="Contenido de la tarea"></div>
+  <section class="diagram-tools"><div class="diagram-heading"><div><h3>Formas y notas visuales</h3><p>Agrega formas o notas y arrástralas para organizarlas en el tablero.</p></div><div class="shape-tools"><button data-shape="text">+ Texto</button><button data-shape="rectangle">+ Rectángulo</button><button data-shape="circle">+ Círculo</button><button data-shape="arrow">+ Flecha</button><button id="delete-selected" type="button">Borrar seleccionada</button><button id="clear-shapes" type="button">Borrar todo</button></div></div>
+    <div id="diagram-board" class="diagram-board" aria-label="Tablero para diagramas"><span class="board-hint">Tu diagrama aparecerá aquí</span></div>
+  </section>
+  <section class="attachments"><label for="attachment-image">Imagen de referencia <span>· opcional</span></label><p>Adjunta una imagen o fotografía para incluirla en el trabajo.</p><input id="attachment-image" type="file" accept="image/*"><div id="image-preview"></div></section>
+  <div class="share-section"><div><h2>Entregar o compartir</h2><p>Prepara un correo, copia un enlace o muestra un código QR.</p></div><div class="share-actions"><button id="email-share">Enviar por correo</button><button id="copy-link">Copiar enlace</button><button id="show-qr">Mostrar QR</button></div><p class="share-note" id="share-note">Para que otras personas abran el enlace o QR, publica ActForm en una dirección web accesible. El enlace incluye texto y diagrama; las imágenes adjuntas se imprimen, pero no se incluyen al compartir.</p></div>
+  <p class="save-note" id="save-note">Se guarda automáticamente en este navegador.</p>
+</section></main><footer>ActForm <span>·</span> Formato estándar para cualquier materia</footer>
+<dialog id="qr-dialog"><form method="dialog"><button class="dialog-close" aria-label="Cerrar">×</button></form><h2>Comparte tu trabajo</h2><p>Escanea el código QR para abrir el enlace compartido.</p><div id="qr-code"></div><button id="copy-qr-link" class="copy-qr-link">Copiar enlace</button></dialog>
+</body></html>
