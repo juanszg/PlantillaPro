@@ -161,15 +161,15 @@ async function shareUrl() {
     const payload = encodeURIComponent(new TextDecoder().decode(bytes));
     return `${location.href.split('#')[0]}#share=${payload}`;
   }
-  const stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate'));
+  const stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'));
   const compressed = new Uint8Array(await new Response(stream).arrayBuffer());
   let binary = '';
   compressed.forEach(byte => { binary += String.fromCharCode(byte); });
   const payload = btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-  return `${location.href.split('#')[0]}#sharez=${payload}`;
+  return `${location.href.split('#')[0]}#actform=${payload}`;
 }
 async function importSharedWork() {
-  const compressedMatch = location.hash.match(/^#sharez=([\w-]+)$/);
+  const compressedMatch = location.hash.match(/^#(?:actform|sharez)=([\w-]+)$/);
   const match = location.hash.match(/^#share=(.+)$/);
   if (!compressedMatch && !match) return;
   try {
@@ -178,7 +178,7 @@ async function importSharedWork() {
       const base64 = compressedMatch[1].replace(/-/g, '+').replace(/_/g, '/');
       const binary = atob(base64 + '='.repeat((4 - base64.length % 4) % 4));
       const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
-      const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate'));
+      const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
       data = JSON.parse(await new Response(stream).text());
     } else data = JSON.parse(decodeURIComponent(match[1]));
     ids.forEach(id => { if (typeof data.fields?.[id] === 'string') document.getElementById(id).value = data.fields[id]; });
@@ -188,7 +188,8 @@ async function importSharedWork() {
     data.board?.forEach(item => addBoardItem(item.type, item.text, item.left, item.top, item.width, item.height));
     updateGuide();
     saveState();
-    document.getElementById('share-note').textContent = 'Trabajo compartido cargado. Puedes revisarlo o editar una copia.';
+    document.getElementById('share-note').textContent = 'Expediente compartido cargado. Usa “Descargar PDF” para guardarlo o imprimirlo.';
+    document.body.classList.add('shared-work');
   } catch { document.getElementById('share-note').textContent = 'No se pudo leer este enlace compartido.'; }
 }
 importSharedWork();
@@ -220,6 +221,7 @@ document.getElementById('show-qr').addEventListener('click', async () => {
   image.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&format=png&data=${encodeURIComponent(await shareUrl())}`;
 });
 document.getElementById('copy-qr-link').addEventListener('click', () => document.getElementById('copy-link').click());
+document.getElementById('download-pdf').addEventListener('click', () => { document.getElementById('qr-dialog').close(); window.focus(); window.print(); });
 
 document.getElementById('print-activity').addEventListener('click', () => { window.focus(); window.print(); });
 

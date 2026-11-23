@@ -53,3 +53,7 @@ button,select,.insert-image{transition:transform .22s ease,box-shadow .22s ease,
   .work-content{min-height:4.2in!important}
   .diagram-board{min-height:2.4in!important;overflow:visible!important}
 }
+
+#download-pdf{display:block;width:100%;margin-bottom:8px;background:var(--accent);color:#fff;border-color:var(--accent)}
+body.shared-work .workspace-top,body.shared-work .editor-toolbar,body.shared-work .share-section,body.shared-work .save-note{display:none}
+body.shared-work .workspace{margin-top:22px}
