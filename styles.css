@@ -253,3 +253,6 @@ button,.insert-image,.copy-qr-link,.line-spacing,.template-picker,.fields-grid l
   .shape-tools #minimize-shapes svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
   .diagram-tools,.attachments{border-radius:10px}
 }
+
+.image-delete-button{color:#b51d28;border-color:#df9ca2;background:#fff3f3}
+.image-delete-button:hover:not(:disabled){border-color:#c8242c;background:#ffe5e5;color:#a81420}

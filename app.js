@@ -55,7 +55,7 @@ function saveState() {
   const items = [...board.querySelectorAll('.board-item')].map(el => ({
     type: el.dataset.type, text: el.querySelector('.shape-label')?.innerText || '', left: el.style.left, top: el.style.top, width: el.style.width, height: el.style.height, radius: el.style.borderRadius
   }));
-  try { localStorage.setItem(storageKey, JSON.stringify({ values, template: templateSelect.value, content: content.innerHTML, lineSpacing: document.getElementById('line-spacing').value, fontFamily: fontSelect.value, items })); } catch { /* El trabajo puede seguir editándose sin almacenamiento local. */ }
+  try { localStorage.setItem(storageKey, JSON.stringify({ values, template: templateSelect.value, content: content.innerHTML, attachmentImage: document.querySelector('#image-preview img')?.src || '', lineSpacing: document.getElementById('line-spacing').value, fontFamily: fontSelect.value, items })); } catch { /* El trabajo puede seguir editándose sin almacenamiento local. */ }
 }
 function updateGuide() { saveState(); }
 function addBoardItem(type, text = '', left = '35px', top = '30px', width = '', height = '', radius = '') {
@@ -104,6 +104,7 @@ try {
   if (state.content) content.innerHTML = safeContent(state.content);
   if (state.lineSpacing) { document.getElementById('line-spacing').value = state.lineSpacing; content.style.lineHeight = state.lineSpacing; }
   if (allowedFonts.has(state.fontFamily)) fontSelect.value = state.fontFamily;
+  if (state.attachmentImage?.startsWith('data:image/')) { const image=document.createElement('img'); image.alt='Imagen adjunta a la actividad'; image.src=state.attachmentImage; document.getElementById('image-preview').append(image); }
   state.items?.forEach(item => addBoardItem(item.type, item.text, item.left, item.top, item.width, item.height, item.radius));
 } catch { /* ActForm inicia vacío cuando el almacenamiento está dañado o no disponible. */ }
 updateGuide();
@@ -170,6 +171,8 @@ board.addEventListener('click', event => {
 document.addEventListener('keydown', event => {
   if (event.key !== 'Delete' && event.key !== 'Backspace') return;
   const target = event.target;
+  const editorHasFocus = target === content || content.contains(target);
+  if (activeImage && editorHasFocus) { event.preventDefault(); deleteActiveImage(); return; }
   if (target.isContentEditable || ['INPUT','TEXTAREA','SELECT','BUTTON'].includes(target.tagName)) return;
   if (board.querySelector('.board-item.selected')) { event.preventDefault(); deleteSelectedItem(); }
 });
@@ -226,25 +229,43 @@ board.addEventListener('pointerdown', event => {
   handle.addEventListener('pointercancel', end);
 });
 
-document.getElementById('inline-image').addEventListener('change', event => {
+async function makeImageDataUrl(file, maxDimension = 1400) {
+  let source, release = () => {};
+  if ('createImageBitmap' in window) source = await createImageBitmap(file);
+  else {
+    const objectUrl = URL.createObjectURL(file);
+    source = await new Promise((resolve, reject) => {
+      const image = new Image(); image.onload = () => resolve(image); image.onerror = reject; image.src = objectUrl;
+    });
+    release = () => URL.revokeObjectURL(objectUrl);
+  }
+  const scale = Math.min(1, maxDimension / Math.max(source.width, source.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(source.width * scale));
+  canvas.height = Math.max(1, Math.round(source.height * scale));
+  canvas.getContext('2d').drawImage(source, 0, 0, canvas.width, canvas.height);
+  source.close?.(); release();
+  return canvas.toDataURL('image/jpeg', .78);
+}
+document.getElementById('inline-image').addEventListener('change', async event => {
   const file = event.target.files?.[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
+  try {
+    const imageData = await makeImageDataUrl(file);
     content.focus();
-    document.execCommand('insertImage', false, reader.result);
+    document.execCommand('insertImage', false, imageData);
     const inserted = content.querySelectorAll('img');
     const image = inserted[inserted.length - 1];
     if (image) { image.classList.add('work-image'); selectEditorImage(image); }
     saveState();
-  };
-  reader.readAsDataURL(file);
+  } catch { document.getElementById('share-note').textContent = 'No se pudo cargar la imagen. Intenta con otro archivo.'; }
   event.target.value = '';
 });
 let activeImage = null;
 const imageOptions = document.getElementById('image-options');
 const positionImageButton = document.getElementById('position-image');
 const resizeImageButton = document.getElementById('resize-image');
+const deleteImageButton = document.getElementById('delete-image');
 function clampEditorImage(image) {
   if (!image || image.style.position !== 'absolute') return;
   const maxLeft = Math.max(0, content.clientWidth - image.offsetWidth);
@@ -256,9 +277,9 @@ function clampEditorImage(image) {
 function selectEditorImage(image) {
   content.querySelectorAll('img.editor-image-selected').forEach(node => node.classList.remove('editor-image-selected'));
   activeImage = image;
-  if (!image) { positionImageButton.disabled = true; resizeImageButton.disabled = true; imageOptions.hidden = true; return; }
+  if (!image) { positionImageButton.disabled = true; resizeImageButton.disabled = true; deleteImageButton.disabled = true; imageOptions.hidden = true; return; }
   image.classList.add('editor-image-selected');
-  positionImageButton.disabled = false; resizeImageButton.disabled = false;
+  positionImageButton.disabled = false; resizeImageButton.disabled = false; deleteImageButton.disabled = false;
   imageOptions.hidden = false;
   const layout = image.style.position === 'absolute' ? (image.style.zIndex === '0' ? 'free-back' : 'free-front') : 'inline';
   document.getElementById('image-position').value = layout;
@@ -271,6 +292,13 @@ content.addEventListener('click', event => {
   if (image) selectEditorImage(image);
   else if (!event.target.closest('#image-options')) selectEditorImage(null);
 });
+function deleteActiveImage() {
+  if (!activeImage) return;
+  activeImage.remove();
+  selectEditorImage(null);
+  saveState();
+}
+deleteImageButton.addEventListener('click', deleteActiveImage);
 positionImageButton.addEventListener('click', () => { if (activeImage) { imageOptions.hidden = false; document.getElementById('image-position').focus(); } });
 resizeImageButton.addEventListener('click', () => { if (activeImage) { imageOptions.hidden = false; document.getElementById('image-size').focus(); } });
 document.getElementById('image-position').addEventListener('change', event => {
@@ -311,22 +339,26 @@ content.addEventListener('pointerdown', event => {
   const end = () => { image.removeEventListener('pointermove', move); image.removeEventListener('pointerup', end); image.removeEventListener('pointercancel', end); saveState(); };
   image.addEventListener('pointermove', move); image.addEventListener('pointerup', end); image.addEventListener('pointercancel', end);
 });
-document.getElementById('attachment-image').addEventListener('change', event => {
+document.getElementById('attachment-image').addEventListener('change', async event => {
   const preview = document.getElementById('image-preview');
   preview.replaceChildren();
   const file = event.target.files?.[0];
-  if (!file) return;
-  const image = document.createElement('img');
-  image.alt = 'Imagen adjunta a la actividad';
-  image.src = URL.createObjectURL(file);
-  preview.append(image);
+  if (!file) { saveState(); return; }
+  try {
+    const image = document.createElement('img');
+    image.alt = 'Imagen adjunta a la actividad';
+    image.src = await makeImageDataUrl(file, 1200);
+    preview.append(image);
+    saveState();
+  } catch { document.getElementById('share-note').textContent = 'No se pudo guardar la imagen. Intenta con otro archivo.'; }
+  event.target.value = '';
 });
 
 function getShareData() {
   return {
     fields: Object.fromEntries(ids.map(id => [id, document.getElementById(id).value])),
     template: templateSelect.value,
-    content: content.innerHTML,
+    content: (() => { const copy=content.cloneNode(true); copy.querySelectorAll('img').forEach(image=>image.remove()); return copy.innerHTML; })(),
     lineSpacing: document.getElementById('line-spacing').value,
     fontFamily: fontSelect.value,
     board: [...board.querySelectorAll('.board-item')].map(el => ({ type: el.dataset.type, text: el.querySelector('.shape-label')?.innerText || '', left: el.style.left, top: el.style.top, width: el.style.width, height: el.style.height, radius: el.style.borderRadius }))
@@ -394,26 +426,13 @@ document.getElementById('show-qr').addEventListener('click', async () => {
   const dialog = document.getElementById('qr-dialog');
   const holder = document.getElementById('qr-code');
   holder.replaceChildren();
-  const status = document.createElement('p');
-  status.textContent = 'Generando código QR…';
-  holder.append(status);
   dialog.showModal();
-  const image = document.createElement('img');
-  image.alt = 'Código QR para abrir el trabajo compartido';
-  image.width = 240;
-  image.height = 240;
-  image.onload = () => holder.replaceChildren(image);
-  image.onerror = () => { holder.textContent = 'No se pudo generar el QR. Copia el enlace y ábrelo en una página publicada para compartirlo.'; };
-  const encoded = encodeURIComponent(await shareUrl());
-  let fallbackTimer = setTimeout(() => { image.src = `https://quickchart.io/qr?size=240&text=${encoded}`; }, 7000);
-  let usedFallback = false;
-  image.onload = () => { clearTimeout(fallbackTimer); holder.replaceChildren(image); };
-  image.onerror = () => {
-    if (!usedFallback) { usedFallback = true; clearTimeout(fallbackTimer); image.src = `https://quickchart.io/qr?size=240&text=${encoded}`; return; }
-    clearTimeout(fallbackTimer);
-    status.textContent = 'No se pudo cargar el QR. Usa “Copiar enlace” para compartir el trabajo.';
-  };
-  image.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&format=png&data=${encoded}`;
+  try {
+    const url = await shareUrl();
+    new QRCode(holder, { text: url, width: 240, height: 240, colorDark: '#123354', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.L });
+  } catch {
+    holder.textContent = 'El contenido del enlace es demasiado extenso para un QR. Reduce el texto y vuelve a intentarlo.';
+  }
 });
 document.getElementById('copy-qr-link').addEventListener('click', () => document.getElementById('copy-link').click());
 document.getElementById('download-pdf').addEventListener('click', () => { document.getElementById('qr-dialog').close(); window.focus(); window.print(); });
@@ -426,3 +445,8 @@ if ('IntersectionObserver' in window) {
 } else document.querySelectorAll('.intro,.workspace').forEach(node => node.classList.add('visible'));
 
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) { window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {})); }
+
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveState(); });
+window.addEventListener('pagehide', saveState);
+window.addEventListener('orientationchange', () => setTimeout(saveState, 250));
+window.addEventListener('resize', () => { if (activeImage) requestAnimationFrame(() => clampEditorImage(activeImage)); });
