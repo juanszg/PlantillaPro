@@ -51,13 +51,29 @@ function safeContent(html) {
   return parsed.body.innerHTML;
 }
 function saveState() {
+  updateAutoDate();
+  const savedAt = new Date().toISOString();
   const values = Object.fromEntries(ids.map(id => [id, document.getElementById(id).value]));
   const items = [...board.querySelectorAll('.board-item')].map(el => ({
     type: el.dataset.type, text: el.querySelector('.shape-label')?.innerText || '', left: el.style.left, top: el.style.top, width: el.style.width, height: el.style.height, radius: el.style.borderRadius
   }));
-  try { localStorage.setItem(storageKey, JSON.stringify({ values, template: templateSelect.value, content: content.innerHTML, attachmentImage: document.querySelector('#image-preview img')?.src || '', lineSpacing: document.getElementById('line-spacing').value, fontFamily: fontSelect.value, items })); } catch { /* El trabajo puede seguir editándose sin almacenamiento local. */ }
+  const snapshot = JSON.stringify({ values, template: templateSelect.value, content: content.innerHTML, attachmentImage: document.querySelector('#image-preview img')?.src || '', lineSpacing: document.getElementById('line-spacing').value, fontFamily: fontSelect.value, items, savedAt });
+  try { localStorage.setItem(storageKey, snapshot); document.getElementById('autosave-status').textContent = `Autoguardado · ${new Intl.DateTimeFormat('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(new Date(savedAt))}`; } catch { document.getElementById('autosave-status').textContent = 'No se pudo autoguardar en este navegador'; }
 }
 function updateGuide() { saveState(); }
+function validateRequiredData() {
+  updateAutoDate();
+  const required = ['activity-title','subject','student-name','student-group'];
+  const missing = required.map(id => document.getElementById(id)).find(field => !field.value.trim());
+  if (missing) {
+    missing.setAttribute('aria-invalid','true');
+    document.getElementById('share-note').textContent = 'Completa todos los Datos de actividad antes de guardar, compartir o imprimir.';
+    missing.focus(); missing.reportValidity(); return false;
+  }
+  required.forEach(id => document.getElementById(id).removeAttribute('aria-invalid'));
+  return true;
+}
+
 function addBoardItem(type, text = '', left = '35px', top = '30px', width = '', height = '', radius = '') {
   const item = document.createElement('div');
   item.className = `board-item ${type === 'text' ? 'text-item' : type}`;
@@ -115,7 +131,7 @@ function updateAutoDate() {
   document.getElementById('auto-date').textContent = new Intl.DateTimeFormat('es-MX',{day:'numeric',month:'long',year:'numeric'}).format(now);
 }
 updateAutoDate();
-ids.forEach(id => document.getElementById(id).addEventListener('input', saveState));
+ids.forEach(id => document.getElementById(id).addEventListener('input', event => { event.currentTarget.removeAttribute('aria-invalid'); saveState(); }));
 templateSelect.addEventListener('change', updateGuide);
 content.addEventListener('input', saveState);
 document.getElementById('line-spacing').addEventListener('change', event => { content.style.lineHeight = event.currentTarget.value; saveState(); });
@@ -126,9 +142,18 @@ fontSelect.addEventListener('change', event => {
 });
 
 document.querySelectorAll('[data-command]').forEach(button => button.addEventListener('click', () => {
-  content.focus();
   const command = button.dataset.command;
-  document.execCommand(command, false, command === 'formatBlock' ? button.dataset.value : null);
+  const selection = window.getSelection();
+  const anchor = selection?.anchorNode;
+  const element = anchor?.nodeType === Node.ELEMENT_NODE ? anchor : anchor?.parentElement;
+  const activeHeading = element?.closest('h2');
+  content.focus();
+  if (command === 'formatBlock') {
+    document.execCommand('formatBlock', false, activeHeading && content.contains(activeHeading) ? 'p' : button.dataset.value);
+  } else if (command === 'clearFormat') {
+    document.execCommand('removeFormat', false, null);
+    document.execCommand('formatBlock', false, 'p');
+  } else document.execCommand(command, false, null);
   saveState();
 }));
 const textColors = ['#111827','#374151','#6b7280','#ffffff','#b91c1c','#ef4444','#f97316','#f59e0b','#eab308','#84cc16','#22c55e','#10b981','#14b8a6','#06b6d4','#0ea5e9','#3b82f6','#2563eb','#4f46e5','#8b5cf6','#d946ef'];
@@ -365,6 +390,7 @@ function getShareData() {
   };
 }
 async function shareUrl() {
+  updateAutoDate();
   const bytes = new TextEncoder().encode(JSON.stringify(getShareData()));
   if (!('CompressionStream' in window)) {
     const payload = encodeURIComponent(new TextDecoder().decode(bytes));
@@ -406,11 +432,13 @@ async function importSharedWork() {
 importSharedWork();
 
 document.getElementById('email-share').addEventListener('click', async () => {
+  if (!validateRequiredData()) return;
   const title = document.getElementById('activity-title').value || 'Actividad escolar';
   const body = `Hola, comparto mi trabajo: ${await shareUrl()}`;
   location.href = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
 });
 document.getElementById('save-work').addEventListener('click', async event => {
+  if (!validateRequiredData()) return;
   saveState();
   const button = event.currentTarget;
   try { await navigator.clipboard.writeText(await shareUrl()); button.textContent = 'GUARDADO · ENLACE COPIADO'; }
@@ -418,11 +446,13 @@ document.getElementById('save-work').addEventListener('click', async event => {
   setTimeout(() => { button.textContent = 'GUARDAR'; }, 2400);
 });
 document.getElementById('copy-link').addEventListener('click', async event => {
+  if (!validateRequiredData()) return;
   try { await navigator.clipboard.writeText(await shareUrl()); event.currentTarget.textContent = 'Enlace copiado'; }
   catch { document.getElementById('share-note').textContent = 'No se pudo copiar. Selecciona y copia la dirección de la página.'; }
   setTimeout(() => { event.currentTarget.textContent = 'Copiar enlace'; }, 1600);
 });
 document.getElementById('show-qr').addEventListener('click', async () => {
+  if (!validateRequiredData()) return;
   const dialog = document.getElementById('qr-dialog');
   const holder = document.getElementById('qr-code');
   holder.replaceChildren();
@@ -437,7 +467,7 @@ document.getElementById('show-qr').addEventListener('click', async () => {
 document.getElementById('copy-qr-link').addEventListener('click', () => document.getElementById('copy-link').click());
 document.getElementById('download-pdf').addEventListener('click', () => { document.getElementById('qr-dialog').close(); window.focus(); window.print(); });
 
-document.getElementById('print-activity').addEventListener('click', () => { window.focus(); window.print(); });
+document.getElementById('print-activity').addEventListener('click', () => { if (!validateRequiredData()) return; updateAutoDate(); saveState(); window.focus(); window.print(); });
 
 if ('IntersectionObserver' in window) {
   const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); } }), { threshold: .12 });
@@ -450,3 +480,25 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 window.addEventListener('pagehide', saveState);
 window.addEventListener('orientationchange', () => setTimeout(saveState, 250));
 window.addEventListener('resize', () => { if (activeImage) requestAnimationFrame(() => clampEditorImage(activeImage)); });
+
+function refreshStats() {
+  const raw = localStorage.getItem(storageKey) || '';
+  const words = (content.innerText.trim().match(/\S+/g) || []).length;
+  const bytes = new TextEncoder().encode(raw).length;
+  document.getElementById('stats-size').textContent = bytes >= 1024*1024 ? `${(bytes/1024/1024).toFixed(2)} MB` : `${(bytes/1024).toFixed(1)} KB`;
+  document.getElementById('stats-words').textContent = String(words);
+  document.getElementById('stats-chars').textContent = String(content.innerText.length);
+  let savedAt = 'Sin guardar';
+  try { const state=JSON.parse(raw); if(state.savedAt) savedAt=new Intl.DateTimeFormat('es-MX',{dateStyle:'medium',timeStyle:'medium'}).format(new Date(state.savedAt)); } catch {}
+  document.getElementById('stats-saved').textContent = savedAt;
+}
+document.getElementById('stats-button').addEventListener('click', () => { refreshStats(); document.getElementById('stats-dialog').showModal(); });
+document.getElementById('refresh-stats').addEventListener('click', refreshStats);
+let pdfSnapshot = null;
+window.addEventListener('afterprint', () => setTimeout(() => {
+  if (window.confirm('¿Guardaste el trabajo como PDF?')) { saveState(); pdfSnapshot = localStorage.getItem(storageKey); }
+}, 200));
+window.addEventListener('beforeunload', event => {
+  const current = localStorage.getItem(storageKey);
+  if (pdfSnapshot === null || current !== pdfSnapshot) { event.preventDefault(); event.returnValue = ''; }
+});
