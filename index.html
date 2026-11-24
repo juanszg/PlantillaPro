@@ -1,12 +1,12 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#17141d"><meta name="description" content="Formato general para crear, organizar y compartir tareas escolares.">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#06284a"><meta name="description" content="Formato general para crear, organizar y compartir tareas escolares.">
 <title>ActForm · Formato escolar</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Alata&family=Anonymous+Pro:ital,wght@0,400;0,700;1,400;1,700&family=BioRhyme:wght@200..800&family=Bitter:ital,wght@0,100..900;1,100..900&family=Cantarell:ital,wght@0,400;0,700;1,400;1,700&family=Federo&family=Fondamento:ital@0;1&family=Fredericka+the+Great&family=Kumar+One&family=Major+Mono+Display&family=Mukta+Malar:wght@200;300;400;500;600;700;800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Stardos+Stencil:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css"><script src="app.js" defer></script>
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="assets/actform.ico" sizes="any"><link rel="apple-touch-icon" href="assets/icon-180.png"><link rel="stylesheet" href="styles.css"><script src="app.js" defer></script>
 </head>
 <body><div class="grain" aria-hidden="true"></div>
 <header class="topbar"><a class="brand" href="#inicio"><span>FORMATO ESCOLAR<small>PLANTILLA UNIVERSAL DE ACTIVIDADES</small></span></a><label class="theme-picker">TEMA<select id="theme-select" aria-label="Tema de color"><option value="blue">Blueprint azul</option><option value="orange">Naranja</option><option value="green">Verde</option></select></label></header>
@@ -25,7 +25,7 @@
 <button class="shape-button" data-shape="diamond" aria-label="Agregar decisión" title="Agregar decisión"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 9-9 9-9-9z"/><path d="M12 7v6M12 16h.01"/></svg><span class="button-label">Decisión</span></button>
 <button class="shape-button" data-shape="pill" aria-label="Agregar inicio o fin" title="Agregar inicio o fin"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10a8 8 0 0 1 0 16H7A8 8 0 0 1 7 4Z"/><path d="m10 8 5 4-5 4z"/></svg><span class="button-label">Inicio / fin</span></button>
 <button class="shape-button" data-shape="arrow" aria-label="Agregar flecha" title="Agregar flecha"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h17M14 6l6 6-6 6"/></svg><span class="button-label">Flecha</span></button>
-<button id="clear-shapes" class="shape-button danger-button" type="button" aria-label="Borrar todo" title="Borrar todo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m-9 0 1 13h10l1-13M10 11v5M14 11v5"/></svg><span class="button-label">Borrar todo</span></button><button id="minimize-shapes" type="button" aria-label="Minimizar sección de formas" title="Minimizar sección" aria-expanded="true">−</button><label class="roundness-control"><span>Redondeado</span><input id="roundness-control" type="range" min="0" max="50" value="8" aria-label="Redondeado de la forma seleccionada"></label></div></div>
+<button id="clear-shapes" class="shape-button danger-button" type="button" aria-label="Borrar todo" title="Borrar todo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m-9 0 1 13h10l1-13M10 11v5M14 11v5"/></svg><span class="button-label">Borrar todo</span></button><button id="minimize-shapes" type="button" aria-label="Minimizar sección de formas" title="Minimizar sección" aria-expanded="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 9 7 7 7-7"/></svg></button></div></div>
     <div id="diagram-board" class="diagram-board" aria-label="Tablero para diagramas"><span class="board-hint">Tu diagrama aparecerá aquí</span></div>
   </section>
   <section class="attachments"><label for="attachment-image">Imagen de referencia <span>· opcional</span></label><p>Adjunta una imagen o fotografía para incluirla en el trabajo.</p><input id="attachment-image" type="file" accept="image/*"><div id="image-preview"></div></section>

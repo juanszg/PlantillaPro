@@ -154,16 +154,12 @@ document.getElementById('clear-shapes').addEventListener('click', () => {
 document.getElementById('minimize-shapes').addEventListener('click', event => {
   const section = document.querySelector('.diagram-tools');
   const minimized = section.classList.toggle('minimized');
-  event.currentTarget.textContent = minimized ? '+' : '−';
+  event.currentTarget.innerHTML = minimized
+    ? '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="12" height="12" rx="1"/><rect x="9" y="3" width="12" height="12" rx="1"/></svg>'
+    : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 9 7 7 7-7"/></svg>';
   event.currentTarget.setAttribute('aria-label', minimized ? 'Expandir sección de formas' : 'Minimizar sección de formas');
   event.currentTarget.title = minimized ? 'Expandir sección' : 'Minimizar sección';
   event.currentTarget.setAttribute('aria-expanded', String(!minimized));
-});
-document.getElementById('roundness-control').addEventListener('input', event => {
-  const selected = board.querySelector('.board-item.selected');
-  if (!selected) return;
-  selected.style.borderRadius = `${event.currentTarget.value}%`;
-  saveState();
 });
 board.querySelectorAll('.board-item').forEach(item => shapeResizeObserver?.observe(item));
 
@@ -428,3 +424,5 @@ if ('IntersectionObserver' in window) {
   const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); } }), { threshold: .12 });
   document.querySelectorAll('.intro,.workspace').forEach((node, index) => { node.classList.add('reveal'); node.style.transitionDelay = `${index * 100}ms`; observer.observe(node); });
 } else document.querySelectorAll('.intro,.workspace').forEach(node => node.classList.add('visible'));
+
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) { window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {})); }
