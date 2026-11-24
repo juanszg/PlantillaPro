@@ -184,3 +184,44 @@ button,.insert-image,.copy-qr-link,.line-spacing,.template-picker,.fields-grid l
 /* Las imágenes libres quedan ancladas y recortadas al área de Desarrollo */
 .work-content{position:relative;isolation:isolate;overflow:hidden}
 .work-content img[style*="position: absolute"]{position:absolute!important;display:block;margin:0!important;max-height:none;object-fit:contain}
+
+/* Paginación continua con márgenes carta repetidos en cada hoja */
+@page{size:letter;margin:.55in .5in .65in}
+@media print{
+  html,body{width:auto!important;min-width:0!important;margin:0!important;padding:0!important;background:#fff!important}
+  main{width:auto!important;max-width:none!important;margin:0!important}
+  .workspace{width:auto!important;max-width:none!important;min-height:0!important;margin:0!important;padding:0!important;overflow:visible!important;break-inside:auto!important;page-break-inside:auto!important}
+  .work-content{min-height:0!important;height:auto!important;overflow:visible!important;break-inside:auto!important;page-break-inside:auto!important;contain:none!important}
+  .editor-heading,.workspace-top,.fields-grid{break-inside:avoid-page;page-break-inside:avoid}
+  .diagram-tools,.attachments{break-inside:auto;page-break-inside:auto}
+  .diagram-board{overflow:visible!important}
+}
+
+/* Hoja limpia: sin metadatos automáticos del navegador y con marco cerrado por página */
+@page{size:letter;margin:0}
+@media print{
+  .workspace{-webkit-box-decoration-break:clone;box-decoration-break:clone;padding:.5in .5in .6in!important}
+  .work-content{-webkit-box-decoration-break:clone;box-decoration-break:clone;border:1px solid #526980!important;padding:18px!important;background-clip:padding-box;}
+  .work-content{break-inside:auto!important;page-break-inside:auto!important}
+}
+
+.fields-grid label{color:var(--accent)!important;font-family:'BioRhyme',serif!important;font-size:13px;font-weight:700;letter-spacing:.01em}
+.fields-grid input,.fields-grid input[type="text"],.fields-grid input[type="date"]{font-weight:600}
+
+:root{--accent-strong:#075582}
+:root[data-theme="orange"]{--accent-strong:#9a4316}
+:root[data-theme="green"]{--accent-strong:#175c48}
+.diagram-tools{background:color-mix(in srgb,var(--accent) 7%,var(--paper));border-color:color-mix(in srgb,var(--accent) 32%,var(--line))}
+.attachments{background:color-mix(in srgb,var(--accent) 15%,var(--paper));border-color:color-mix(in srgb,var(--accent) 42%,var(--line))}
+.workspace-meta{display:grid;justify-items:end;gap:6px}
+.auto-date{color:var(--accent-strong);font:700 13px 'BioRhyme',serif;letter-spacing:.02em}
+.template-picker{color:var(--accent-strong)!important;font:700 14px 'BioRhyme',serif!important}
+.template-picker select{font-family:'BioRhyme',serif;border-color:color-mix(in srgb,var(--accent) 38%,var(--line))}
+.text-color-tool{display:flex;align-items:center;gap:4px;padding:2px 5px;border:1px solid #cdbfce;border-radius:4px;background:#fffefa}
+#color-text-button{width:30px;height:30px;padding:2px;border:0;border-bottom:3px solid var(--accent);background:transparent;color:#273c4b;font:700 20px 'BioRhyme',serif;cursor:pointer}
+#custom-text-color{width:26px;height:26px;padding:0;border:0;background:transparent;cursor:pointer}
+.text-color-palette{display:grid;grid-template-columns:repeat(10,20px);gap:4px;padding:8px;border:1px solid var(--line);border-radius:5px;background:var(--paper);box-shadow:0 5px 20px #12335430}
+.text-color-palette[hidden]{display:none!important}
+.color-swatch{width:20px;height:20px;padding:0;border:1px solid #60708066;border-radius:50%;cursor:pointer}
+.color-swatch:hover{transform:scale(1.18);outline:2px solid var(--accent)}
+@media(max-width:560px){.workspace-meta{justify-items:start;width:100%}.auto-date{align-self:flex-start}}

@@ -26,6 +26,7 @@ function safeContent(html) {
         if (!allowed.has(child.tagName)) { clean(child); child.replaceWith(...child.childNodes); return; }
         [...child.attributes].forEach(attr => {
           if (child.tagName === 'FONT' && attr.name === 'face' && allowedFonts.has(attr.value)) return;
+          if (child.tagName === 'FONT' && attr.name === 'color' && /^#[0-9a-f]{3,8}$/i.test(attr.value)) return;
           if (child.tagName === 'IMG' && attr.name === 'src' && attr.value.startsWith('data:image/')) return;
           if (child.tagName === 'IMG' && attr.name === 'alt') return;
           if (child.tagName === 'IMG' && attr.name === 'style') {
@@ -106,7 +107,13 @@ try {
   state.items?.forEach(item => addBoardItem(item.type, item.text, item.left, item.top, item.width, item.height, item.radius));
 } catch { /* ActForm inicia vacío cuando el almacenamiento está dañado o no disponible. */ }
 updateGuide();
-if (!document.getElementById('activity-date').value) document.getElementById('activity-date').value = new Date().toISOString().slice(0,10);
+function updateAutoDate() {
+  const now = new Date();
+  const localIso = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  document.getElementById('activity-date').value = localIso;
+  document.getElementById('auto-date').textContent = new Intl.DateTimeFormat('es-MX',{day:'numeric',month:'long',year:'numeric'}).format(now);
+}
+updateAutoDate();
 ids.forEach(id => document.getElementById(id).addEventListener('input', saveState));
 templateSelect.addEventListener('change', updateGuide);
 content.addEventListener('input', saveState);
@@ -123,6 +130,15 @@ document.querySelectorAll('[data-command]').forEach(button => button.addEventLis
   document.execCommand(command, false, command === 'formatBlock' ? button.dataset.value : null);
   saveState();
 }));
+const textColors = ['#111827','#374151','#6b7280','#ffffff','#b91c1c','#ef4444','#f97316','#f59e0b','#eab308','#84cc16','#22c55e','#10b981','#14b8a6','#06b6d4','#0ea5e9','#3b82f6','#2563eb','#4f46e5','#8b5cf6','#d946ef'];
+const colorPalette = document.getElementById('text-color-palette');
+textColors.forEach(color => {
+  const swatch = document.createElement('button'); swatch.type='button'; swatch.className='color-swatch'; swatch.style.backgroundColor=color; swatch.title=color; swatch.setAttribute('aria-label',`Color ${color}`);
+  swatch.addEventListener('click', () => applyTextColor(color)); colorPalette.append(swatch);
+});
+function applyTextColor(color) { content.focus(); document.execCommand('foreColor', false, color); colorPalette.hidden=true; saveState(); }
+document.getElementById('color-text-button').addEventListener('click', () => { colorPalette.hidden=!colorPalette.hidden; });
+document.getElementById('custom-text-color').addEventListener('input', event => applyTextColor(event.currentTarget.value));
 function selectBoardItem(item) {
   board.querySelectorAll('.board-item.selected').forEach(node => node.classList.remove('selected'));
   if (item) item.classList.add('selected');
